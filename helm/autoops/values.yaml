@@ -1,0 +1,267 @@
+# Default values for autoops.
+# This is a YAML-formatted file.
+
+# Global configuration
+global:
+  imageRegistry: ""
+  imagePullSecrets: []
+
+# Image configuration
+image:
+  registry: docker.io
+  repository: autoops/autoops
+  tag: "1.0.0"
+  pullPolicy: IfNotPresent
+  pullSecrets: []
+
+# Service account
+serviceAccount:
+  create: true
+  name: ""
+  annotations: {}
+
+# Pod security context
+podSecurityContext:
+  fsGroup: 1001
+  runAsNonRoot: true
+  runAsUser: 1001
+
+# Container security context
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+  runAsUser: 1001
+
+# Resource configuration
+resources:
+  limits:
+    cpu: 2000m
+    memory: 4Gi
+    nvidia.com/gpu: 1  # For GPU scheduling
+  requests:
+    cpu: 500m
+    memory: 1Gi
+
+# Autoscaling configuration
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 70
+  targetMemoryUtilizationPercentage: 80
+
+# Node selection
+nodeSelector: {}
+tolerations: []
+affinity:
+  podAntiAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        podAffinityTerm:
+          labelSelector:
+            matchExpressions:
+              - key: app.kubernetes.io/name
+                operator: In
+                values:
+                  - autoops
+          topologyKey: kubernetes.io/hostname
+
+# Service configuration
+service:
+  type: ClusterIP
+  port: 8080
+  targetPort: 8080
+  annotations: {}
+
+# Ingress configuration
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+    # kubernetes.io/ingress.class: nginx
+    # cert-manager.io/cluster-issuer: letsencrypt-prod
+  hosts:
+    - host: autoops.local
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+    # - secretName: autoops-tls
+    #   hosts:
+    #     - autoops.local
+
+# Environment configuration
+env:
+  # OpenAI configuration
+  OPENAI_API_KEY: ""  # Set via secret
+  OPENAI_MODEL: "gpt-4"
+  
+  # Kubernetes configuration
+  KUBERNETES_NAMESPACE: "default"
+  
+  # Dashboard configuration
+  DASHBOARD_HOST: "0.0.0.0"
+  DASHBOARD_PORT: "8080"
+  DASHBOARD_DEBUG: "false"
+  
+  # Task configuration
+  MAX_CONCURRENT_TASKS: "10"
+  TASK_TIMEOUT_SECONDS: "300"
+  RETRY_MAX_ATTEMPTS: "3"
+  RETRY_DELAY_SECONDS: "1"
+  
+  # Logging configuration
+  LOG_LEVEL: "INFO"
+  LOG_FORMAT: "json"
+  
+  # Development settings
+  DEV_MODE: "false"
+
+# Secret configuration
+secrets:
+  # OpenAI API key (create manually or via external-secrets)
+  openaiApiKey: ""
+  
+  # Secret key for JWT tokens
+  secretKey: "your-secret-key-here"
+
+# ConfigMap configuration
+configMap:
+  enabled: true
+  data: {}
+
+# Persistence configuration
+persistence:
+  enabled: false
+  storageClass: ""
+  accessMode: ReadWriteOnce
+  size: 10Gi
+
+# Redis configuration (for state management)
+redis:
+  enabled: true
+  auth:
+    enabled: false
+  master:
+    persistence:
+      enabled: true
+      size: 8Gi
+  replica:
+    replicaCount: 1
+
+# Jaeger configuration (for tracing)
+jaeger:
+  enabled: true
+  allInOne:
+    enabled: true
+  storage:
+    type: memory
+
+# OpenTelemetry configuration
+otel:
+  enabled: true
+  serviceName: "autoops"
+  exporterOtlpEndpoint: "http://jaeger-collector:14268/api/traces"
+  exporterJaegerEndpoint: "http://jaeger-collector:14268/api/traces"
+
+# Monitoring configuration
+monitoring:
+  serviceMonitor:
+    enabled: false
+    namespace: ""
+    interval: 30s
+    scrapeTimeout: 10s
+    labels: {}
+  
+  prometheusRule:
+    enabled: false
+    namespace: ""
+    labels: {}
+    rules: []
+
+# Network policies
+networkPolicy:
+  enabled: false
+  ingress: []
+  egress: []
+
+# Pod disruption budget
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
+
+# Health checks
+livenessProbe:
+  httpGet:
+    path: /api/health
+    port: 8080
+  initialDelaySeconds: 30
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 3
+
+readinessProbe:
+  httpGet:
+    path: /api/health
+    port: 8080
+  initialDelaySeconds: 5
+  periodSeconds: 5
+  timeoutSeconds: 3
+  failureThreshold: 3
+
+# Startup probe
+startupProbe:
+  httpGet:
+    path: /api/health
+    port: 8080
+  initialDelaySeconds: 10
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 30
+
+# RBAC configuration
+rbac:
+  create: true
+  rules:
+    - apiGroups: [""]
+      resources: ["pods", "services", "configmaps", "secrets", "namespaces", "persistentvolumeclaims"]
+      verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+    - apiGroups: ["apps"]
+      resources: ["deployments", "statefulsets", "daemonsets"]
+      verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+    - apiGroups: ["networking.k8s.io"]
+      resources: ["ingresses"]
+      verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+    - apiGroups: ["autoscaling"]
+      resources: ["horizontalpodautoscalers"]
+      verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+
+# GPU node scheduling
+gpu:
+  enabled: false
+  nodeSelector:
+    accelerator: nvidia-tesla-k80
+  tolerations:
+    - key: nvidia.com/gpu
+      operator: Exists
+      effect: NoSchedule
+
+# Extra volumes and volume mounts
+extraVolumes: []
+extraVolumeMounts: []
+
+# Extra environment variables
+extraEnvVars: []
+
+# Extra containers
+extraContainers: []
+
+# Pod annotations
+podAnnotations: {}
+
+# Pod labels
+podLabels: {}

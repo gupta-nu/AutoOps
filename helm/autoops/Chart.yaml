@@ -1,0 +1,27 @@
+apiVersion: v2
+name: autoops
+description: AutoOps Multi-Agent Kubernetes Orchestrator
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
+keywords:
+  - kubernetes
+  - automation
+  - multi-agent
+  - ai
+  - orchestration
+home: https://github.com/gupta-nu/AutoOps
+sources:
+  - https://github.com/gupta-nu/AutoOps
+maintainers:
+  - name: AutoOps Team
+    email: contact@autoops.dev
+dependencies:
+  - name: redis
+    version: "17.11.3"
+    repository: "https://charts.bitnami.com/bitnami"
+    condition: redis.enabled
+  - name: jaeger
+    version: "0.71.2"
+    repository: "https://jaegertracing.github.io/helm-charts"
+    condition: jaeger.enabled
