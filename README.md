@@ -1,17 +1,17 @@
 # AutoOps: Multi-Agent Kubernetes Orchestrator
 
-A sophisticated multi-agent system that interprets natural language requests and applies changes to Kubernetes clusters through intelligent planning and execution. Built with LangGraph for advanced agent workflows and FastAPI for modern web interfaces.
+A  multi-agent system that interprets natural language requests and applies changes to Kubernetes clusters through intelligent planning and execution. Built with LangGraph for advanced agent workflows and FastAPI for modern web interfaces.
 
 ## Features
 
-- **🤖 Multi-Agent Architecture**: Planner + Executor workflow using LangGraph with advanced state management
-- **🗣️ Natural Language Interface**: Process complex Kubernetes operations from plain English commands
-- **📊 Comprehensive Monitoring**: Built-in tracing, metrics collection, and real-time observability
-- **⚡ Multiple Interfaces**: CLI, REST API, WebSocket dashboard, and standalone demo modes
-- **🔄 Asynchronous Orchestration**: Robust task management with error handling and progress tracking
-- **📱 Real-time Dashboard**: Interactive web interface with live updates and task monitoring
-- **🚀 Production Ready**: Helm charts, Docker containers, autoscaling, and comprehensive deployment configs
-- **🛠️ Developer Friendly**: Simplified setup, zero-dependency demo, and extensive documentation
+- **Multi-Agent Architecture**: Planner + Executor workflow using LangGraph with advanced state management
+- **Natural Language Interface**: Process complex Kubernetes operations from plain English commands
+- **Comprehensive Monitoring**: Built-in tracing, metrics collection, and real-time observability
+- **Multiple Interfaces**: CLI, REST API, WebSocket dashboard, and standalone demo modes
+- **Asynchronous Orchestration**: Robust task management with error handling and progress tracking
+- **Real-time Dashboard**: Interactive web interface with live updates and task monitoring
+- **Production Ready**: Helm charts, Docker containers, autoscaling, and comprehensive deployment configs
+- **Developer Friendly**: Simplified setup, zero-dependency demo, and extensive documentation
 
 ## Architecture
 
@@ -102,7 +102,7 @@ python src/main.py
 
 ## Usage Examples
 
-### 🖥️ Web Dashboard
+###  Web Dashboard
 ```bash
 # Start the dashboard
 python main_simple.py
@@ -111,7 +111,7 @@ python main_simple.py
 # Use the interactive interface for real-time monitoring
 ```
 
-### 💻 Command Line Interface
+###  Command Line Interface
 ```bash
 # Process natural language requests via main interfaces
 python main_simple.py
@@ -127,7 +127,7 @@ python main_simple.py health
 python main_simple.py serve
 ```
 
-### 🔌 REST API
+###  REST API
 ```bash
 # Submit tasks via API
 curl -X POST http://localhost:8000/api/tasks \
@@ -141,7 +141,7 @@ curl http://localhost:8000/api/health
 curl http://localhost:8000/api/metrics
 ```
 
-### 🐍 Python Integration
+###  Python Integration
 ```python
 from src.agents.orchestrator import AutoOpsOrchestrator
 
@@ -158,7 +158,7 @@ print(f"Status: {result.status}")
 print(f"Actions: {result.actions}")
 ```
 
-### 🎮 Demo Scenarios
+###  Demo Scenarios
 ```bash
 # Run comprehensive demo
 bash demo_scripts/complete_demo.sh
@@ -177,7 +177,7 @@ python standalone_demo.py
 
 ```
 AutoOps/
-├── 🏗️ Core Components
+├──Core Components
 │   ├── src/
 │   │   ├── agents/              # LangGraph multi-agent system
 │   │   │   ├── orchestrator.py  # Main orchestration logic
@@ -199,16 +199,16 @@ AutoOps/
 │   │       ├── config.py       # Configuration management
 │   │       └── logging.py      # Logging setup
 │
-├── 🚀 Entry Points
+├── Entry Points
 │   ├── main_simple.py          # Simplified startup (recommended)
 │   ├── standalone_demo.py      # Zero-dependency demo
 │   └── src/main.py            # Full system startup
 │
-├── 📦 Deployment
+├── Deployment
 │   └── helm/                  # Helm charts for K8s deployment
 │       └── autoops/          # Complete Helm chart
 │
-├── 🧪 Testing & Demos
+├──Testing & Demos
 │   ├── tests/                # Test suite
 │   │   └── test_agents.py   # Agent testing
 │   ├── demo_scripts/        # Demo automation scripts
@@ -218,7 +218,7 @@ AutoOps/
 │   ├── standalone_demo.py   # Zero-dependency demo
 │   └── examples/            # Usage examples
 │
-├── 📚 Configuration & Docs
+├── Configuration & Docs
 │   ├── config/              # Configuration files
 │   │   ├── .env.example     # Environment template
 │   │   ├── settings.py      # Core settings
@@ -669,31 +669,9 @@ pip install -r requirements.txt
 - Address review feedback
 - Ensure CI passes
 
-### Areas for Contribution
--  **New Agents**: Add specialized agents for specific use cases
--  **Integrations**: Connect with more tools (ArgoCD, Flux, etc.)
--  **LLM Providers**: Support for more language models
--  **Monitoring**: Enhanced metrics and alerting
--  **Testing**: Expand test coverage and scenarios
--  **Documentation**: Improve guides and examples
-
-### Code Guidelines
-- Follow Python PEP 8 style guide
-- Write comprehensive tests (aim for >80% coverage)
-- Document all public APIs
-- Use type hints consistently
-- Keep functions focused and small
-
 ## License
 
 MIT License - see [LICENSE](LICENSE) file for details.
-
-## Support
-
-- 📖 **Documentation**: [docs/API.md](docs/API.md)
-- 🐛 **Bug Reports**: [GitHub Issues](https://github.com/gupta-nu/AutoOps/issues)
-- 💬 **Discussions**: [GitHub Discussions](https://github.com/gupta-nu/AutoOps/discussions)
-- 📧 **Email**: support@autoops.dev
 
 
 ## Acknowledgments
