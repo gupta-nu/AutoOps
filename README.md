@@ -113,16 +113,18 @@ python main_simple.py
 
 ### 💻 Command Line Interface
 ```bash
-# Process natural language requests
-python src/cli.py "Deploy nginx with 3 replicas"
-python src/cli.py "Scale frontend to 5 pods"
-python src/cli.py "Create service for api deployment"
+# Process natural language requests via main interfaces
+python main_simple.py
 
-# Check task status
-python src/cli.py --status
+# Or use full system CLI
+python src/main.py "Deploy nginx with 3 replicas" 
+python src/main.py "Scale frontend to 5 pods"
 
-# List all tasks
-python src/cli.py --list
+# Check system status
+python main_simple.py health
+
+# Access web dashboard
+python main_simple.py serve
 ```
 
 ### 🔌 REST API
@@ -200,22 +202,15 @@ AutoOps/
 ├── 🚀 Entry Points
 │   ├── main_simple.py          # Simplified startup (recommended)
 │   ├── standalone_demo.py      # Zero-dependency demo
-│   ├── src/main.py            # Full system startup
-│   └── src/cli.py             # Command-line interface
+│   └── src/main.py            # Full system startup
 │
 ├── 📦 Deployment
-│   ├── helm/                  # Helm charts for K8s deployment
-│   │   └── autoops/          # Complete Helm chart
-│   ├── docker/               # Container configurations
-│   │   ├── Dockerfile        # Application container
-│   │   └── docker-compose.yml # Local development
-│   └── k8s/                  # Raw Kubernetes manifests
+│   └── helm/                  # Helm charts for K8s deployment
+│       └── autoops/          # Complete Helm chart
 │
 ├── 🧪 Testing & Demos
-│   ├── tests/                # Comprehensive test suites
-│   │   ├── unit/            # Unit tests
-│   │   ├── integration/     # Integration tests
-│   │   └── e2e/             # End-to-end tests
+│   ├── tests/                # Test suite
+│   │   └── test_agents.py   # Agent testing
 │   ├── demo_scripts/        # Demo automation scripts
 │   │   ├── simple_demo.sh   # Quick demo
 │   │   ├── complete_demo.sh # Full feature demo
@@ -226,14 +221,11 @@ AutoOps/
 ├── 📚 Configuration & Docs
 │   ├── config/              # Configuration files
 │   │   ├── .env.example     # Environment template
-│   │   ├── logging.yaml     # Logging configuration
-│   │   └── tracing.yaml     # Tracing configuration
-│   ├── docs/               # Detailed documentation
-│   │   ├── api.md          # API documentation
-│   │   ├── deployment.md   # Deployment guide
-│   │   └── development.md  # Development guide
+│   │   ├── settings.py      # Core settings
+│   │   └── settings_simple.py # Simplified settings
+│   ├── docs/               # Documentation
+│   │   └── API.md          # API documentation
 │   ├── README.md           # Main documentation (this file)
-│   ├── README_DEMO.md      # Demo-specific guide
 │   └── requirements.txt    # Python dependencies
 ```
 
@@ -273,8 +265,8 @@ DRY_RUN=false
 ### Configuration Files
 
 - `config/.env`: Environment variables and secrets
-- `config/logging.yaml`: Structured logging configuration
-- `config/tracing.yaml`: OpenTelemetry tracing setup
+- `config/settings.py`: Core application settings
+- `config/settings_simple.py`: Simplified configuration
 - `helm/autoops/values.yaml`: Helm deployment values
 
 ### Runtime Configuration
@@ -304,10 +296,10 @@ source venv/bin/activate  # Linux/Mac
 
 # Install development dependencies
 pip install -r requirements.txt
-pip install -r requirements-dev.txt  # Additional dev tools
+# Note: requirements-dev.txt will be created for additional dev tools
 
-# Set up pre-commit hooks
-pre-commit install
+# Set up pre-commit hooks (if available)
+# pre-commit install
 ```
 
 ### Running Tests
@@ -368,9 +360,9 @@ bandit -r src/
 # Build Docker image
 docker build -t autoops:dev .
 
-# Run integration tests with Docker
-docker-compose -f docker/docker-compose.yml up -d
-pytest tests/integration/
+# Run integration tests with Docker (if docker-compose.yml exists)
+docker-compose up -d
+pytest tests/
 
 # Test Helm chart
 helm template ./helm/autoops --debug
@@ -382,8 +374,8 @@ helm install autoops-test ./helm/autoops --dry-run
 ### Local Development
 
 ```bash
-# Using Docker Compose
-docker-compose -f docker/docker-compose.yml up
+# Using Docker Compose (if docker-compose.yml exists)
+docker-compose up
 
 # Using local Python
 python main_simple.py
@@ -413,17 +405,14 @@ helm upgrade autoops ./helm/autoops
 helm uninstall autoops
 ```
 
-#### Option 2: Raw Kubernetes Manifests
+#### Option 2: Raw Kubernetes Manifests (To be created)
 
 ```bash
-# Apply all manifests
-kubectl apply -f k8s/
+# Create Kubernetes manifests based on Helm templates
+helm template autoops ./helm/autoops > k8s-manifests.yaml
 
-# Apply specific components
-kubectl apply -f k8s/namespace.yaml
-kubectl apply -f k8s/deployment.yaml
-kubectl apply -f k8s/service.yaml
-kubectl apply -f k8s/ingress.yaml
+# Apply the generated manifests
+kubectl apply -f k8s-manifests.yaml
 ```
 
 ### Production Configuration
@@ -490,8 +479,8 @@ kubectl scale deployment autoops --replicas=5
 # Vertical scaling (update resources)
 kubectl patch deployment autoops -p '{"spec":{"template":{"spec":{"containers":[{"name":"autoops","resources":{"requests":{"memory":"1Gi","cpu":"500m"}}}]}}}}'
 
-# Enable cluster autoscaling
-kubectl apply -f k8s/cluster-autoscaler.yaml
+# Enable cluster autoscaling (requires cluster autoscaler setup)
+# kubectl apply -f k8s/cluster-autoscaler.yaml
 ```
 
 ## API Reference
@@ -529,23 +518,17 @@ ws.send(JSON.stringify({
 ### CLI Commands
 
 ```bash
-# Basic usage
-autoops "deploy nginx with 3 replicas"
+# Basic usage through main interfaces
+python main_simple.py serve                    # Start web server
+python main_simple.py health                   # Check health
+python src/main.py "deploy nginx with 3 replicas"  # Submit request
 
-# Task management
-autoops --list                    # List all tasks
-autoops --status                  # Show system status
-autoops --cancel <task-id>        # Cancel specific task
-autoops --logs <task-id>          # Show task logs
+# Task management (via web interface at /api/tasks)
+curl http://localhost:8000/api/tasks           # List all tasks
+curl http://localhost:8000/api/health          # Show system status
 
 # Configuration
-autoops --config                  # Show current configuration
-autoops --set-config key=value    # Update configuration
-autoops --validate-config         # Validate configuration
-
-# Development
-autoops --dry-run "scale app to 5" # Preview without execution
-autoops --debug "create service"   # Enable debug logging
+python -c "from src.utils.config import Config; print(Config().get_all())"  # Show configuration
 ```
 
 ## Troubleshooting
@@ -587,12 +570,12 @@ python main_simple.py --port 8080
 
 #### 4. Task Execution Failures
 ```bash
-# Check task logs
-autoops --logs <task-id>
+# Check task logs via API
+curl http://localhost:8000/api/tasks/<task-id>
 
 # Enable dry-run mode
 export DRY_RUN=true
-autoops "your command here"
+python src/main.py "your command here"
 
 # Validate Kubernetes permissions
 kubectl auth can-i create pods
@@ -654,7 +637,7 @@ A: Yes! Use the standalone demo (`python standalone_demo.py`) or configure alter
 A: AutoOps includes safety features like dry-run mode, input validation, and RBAC. Always test in staging first.
 
 **Q: Can I extend AutoOps with custom agents?**
-A: Absolutely! The LangGraph architecture makes it easy to add new agents. See `docs/development.md` for details.
+A: Absolutely! The LangGraph architecture makes it easy to add new agents. Check the source code in `src/agents/` for examples.
 
 **Q: How do I backup task history?**
 A: Task data is stored in the configured database. Enable `ENABLE_TASK_PERSISTENCE=true` and backup the data directory.
@@ -670,8 +653,8 @@ We welcome contributions! Here's how to get started:
 ```bash
 git clone https://github.com/gupta-nu/AutoOps.git
 cd AutoOps
-pip install -r requirements-dev.txt
-pre-commit install
+pip install -r requirements.txt
+# Additional dev tools can be installed as needed
 ```
 
 ### 2. Making Changes
@@ -687,12 +670,12 @@ pre-commit install
 - Ensure CI passes
 
 ### Areas for Contribution
-- 🤖 **New Agents**: Add specialized agents for specific use cases
-- 🔌 **Integrations**: Connect with more tools (ArgoCD, Flux, etc.)
-- 🌐 **LLM Providers**: Support for more language models
-- 📊 **Monitoring**: Enhanced metrics and alerting
-- 🧪 **Testing**: Expand test coverage and scenarios
-- 📚 **Documentation**: Improve guides and examples
+-  **New Agents**: Add specialized agents for specific use cases
+-  **Integrations**: Connect with more tools (ArgoCD, Flux, etc.)
+-  **LLM Providers**: Support for more language models
+-  **Monitoring**: Enhanced metrics and alerting
+-  **Testing**: Expand test coverage and scenarios
+-  **Documentation**: Improve guides and examples
 
 ### Code Guidelines
 - Follow Python PEP 8 style guide
@@ -707,10 +690,11 @@ MIT License - see [LICENSE](LICENSE) file for details.
 
 ## Support
 
-- 📖 **Documentation**: [docs/](docs/)
+- 📖 **Documentation**: [docs/API.md](docs/API.md)
 - 🐛 **Bug Reports**: [GitHub Issues](https://github.com/gupta-nu/AutoOps/issues)
 - 💬 **Discussions**: [GitHub Discussions](https://github.com/gupta-nu/AutoOps/discussions)
 - 📧 **Email**: support@autoops.dev
+
 
 ## Acknowledgments
 
