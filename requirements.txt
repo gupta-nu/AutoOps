@@ -12,17 +12,17 @@ pyyaml>=6.0
 fastapi>=0.104.0
 uvicorn[standard]>=0.24.0
 websockets>=12.0
-asyncio-mqtt>=0.16.0
+paho-mqtt>=1.6.0
 
 # Monitoring and Tracing
 opentelemetry-api>=1.21.0
 opentelemetry-sdk>=1.21.0
-opentelemetry-auto-instrumentation>=0.42b0
+opentelemetry-instrumentation>=0.41b0
 opentelemetry-exporter-jaeger>=1.21.0
 opentelemetry-exporter-otlp>=1.21.0
-opentelemetry-instrumentation-fastapi>=0.42b0
-opentelemetry-instrumentation-requests>=0.42b0
-opentelemetry-instrumentation-logging>=0.42b0
+opentelemetry-instrumentation-fastapi>=0.41b0
+opentelemetry-instrumentation-requests>=0.41b0
+opentelemetry-instrumentation-logging>=0.41b0
 
 # Database and State Management
 redis>=5.0.0

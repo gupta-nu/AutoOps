@@ -13,7 +13,7 @@ import redis.asyncio as redis
 from opentelemetry import trace
 from tenacity import retry, stop_after_attempt, wait_exponential
 
-from ..monitoring.tracing import get_tracer
+from ..monitoring.tracing_simple import get_tracer
 from ..agents.state import TaskStatus, AutoOpsState
 from config.settings import settings
 

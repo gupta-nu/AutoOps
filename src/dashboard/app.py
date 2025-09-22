@@ -14,8 +14,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 from ..agents.orchestrator import AutoOpsOrchestrator
-from ..utils.task_manager import task_manager, TaskPriority
-from ..monitoring.tracing import instrument_fastapi, initialize_tracing
+from ..utils.task_manager_simple import task_manager, TaskPriority
+from ..monitoring.tracing_simple import setup_tracing, initialize_tracing, instrument_fastapi
 from config.settings import settings
 
 

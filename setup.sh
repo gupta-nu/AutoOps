@@ -32,7 +32,28 @@ fi
 # Install dependencies
 echo "📦 Installing Python dependencies..."
 pip install --upgrade pip
-pip install -r requirements.txt
+
+# Try minimal requirements first
+if pip install -r requirements-minimal.txt; then
+    echo "✅ Minimal dependencies installed successfully"
+    echo "📋 To install additional monitoring and development tools, run:"
+    echo "   pip install -r requirements.txt"
+else
+    echo "❌ Failed to install minimal dependencies"
+    echo "🔄 Trying individual package installation..."
+    
+    # Install core packages individually
+    pip install "langgraph>=0.1.0" || echo "⚠️ langgraph installation failed"
+    pip install "langchain>=0.1.0" || echo "⚠️ langchain installation failed"
+    pip install "langchain-openai>=0.1.0" || echo "⚠️ langchain-openai installation failed"
+    pip install "openai>=1.0.0" || echo "⚠️ openai installation failed"
+    pip install "kubernetes>=28.0.0" || echo "⚠️ kubernetes installation failed"
+    pip install "fastapi>=0.104.0" || echo "⚠️ fastapi installation failed"
+    pip install "uvicorn[standard]>=0.24.0" || echo "⚠️ uvicorn installation failed"
+    pip install "redis>=5.0.0" || echo "⚠️ redis installation failed"
+    pip install "click>=8.1.0" || echo "⚠️ click installation failed"
+    pip install "python-dotenv>=1.0.0" || echo "⚠️ python-dotenv installation failed"
+fi
 
 # Create necessary directories
 echo "📁 Creating necessary directories..."

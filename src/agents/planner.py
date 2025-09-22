@@ -4,14 +4,14 @@ Planner Agent - Interprets natural language requests and creates execution plans
 
 import json
 from datetime import datetime
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Any
 from uuid import uuid4
 
 from langchain_openai import ChatOpenAI
 from langchain.schema import BaseMessage, HumanMessage, SystemMessage
 from opentelemetry import trace
 
-from ..monitoring.tracing import get_tracer
+from ..monitoring.tracing_simple import get_tracer
 from .state import (
     AutoOpsState, 
     ExecutionPlan, 
@@ -19,7 +19,8 @@ from .state import (
     KubernetesAction, 
     ResourceType, 
     TaskStatus,
-    AgentType
+    AgentType,
+    ActionStep
 )
 from config.settings import settings
 
@@ -91,57 +92,68 @@ Examples:
 Be precise and ensure all operations are valid Kubernetes actions.
 """
     
-    @tracer.start_as_current_span("planner_agent_plan")
-    async def plan(self, state: AutoOpsState) -> AutoOpsState:
+    def plan(self, user_request: str, context: Optional[Dict[str, Any]] = None) -> List[ActionStep]:
         """
-        Create an execution plan based on the natural language request
+        Plan the execution steps for a given user request.
+        
+        Args:
+            user_request: Natural language request from user
+            context: Optional context information
+            
+        Returns:
+            List of action steps to execute
         """
-        with tracer.start_as_current_span("planning_process") as span:
-            span.set_attribute("request", state.original_request)
-            span.set_attribute("request_id", str(state.request_id))
+        with tracer.start_as_current_span("planner_agent_plan") as span:
+            span.set_attribute("user_request", user_request)
             
             try:
-                # Update planner state
-                state.planner_state.status = TaskStatus.PLANNING
-                state.planner_state.current_task = "Analyzing request and creating plan"
-                state.planner_state.last_updated = datetime.utcnow()
-                state.current_step = "planning"
+                # Build prompt with context
+                prompt = self._build_prompt(user_request, context)
                 
-                # Create messages for LLM
-                messages = [
-                    SystemMessage(content=self.system_prompt),
-                    HumanMessage(content=f"Request: {state.original_request}")
-                ]
+                # Get LLM response
+                response = self.llm.invoke(prompt)
+                response_text = response.content if hasattr(response, 'content') else str(response)
                 
-                # Get plan from LLM
-                span.add_event("calling_llm_for_plan")
-                response = await self.llm.ainvoke(messages)
-                plan_data = self._parse_llm_response(response.content)
-                
-                # Create execution plan
+                # Parse and validate response
+                plan_data = self._parse_llm_response(response_text)
                 execution_plan = self._create_execution_plan(plan_data)
-                state.execution_plan = execution_plan
                 
-                # Update state
-                state.planner_state.status = TaskStatus.COMPLETED
-                state.planner_state.last_action = f"Created plan with {len(execution_plan.operations)} operations"
-                state.planner_state.last_updated = datetime.utcnow()
-                state.update_timestamp()
+                # Convert to ActionSteps
+                steps = []
+                for i, operation in enumerate(execution_plan.operations):
+                    step = ActionStep(
+                        step_id=f"step_{i+1}",
+                        action=operation.action.value,
+                        resource_type=operation.resource_type.value,
+                        resource_name=operation.resource_name,
+                        namespace=operation.namespace,
+                        manifest=operation.manifest,
+                        parameters=operation.parameters,
+                        dependencies=[]  # TODO: Extract dependencies
+                    )
+                    steps.append(step)
                 
-                span.set_attribute("plan_operations_count", len(execution_plan.operations))
-                span.add_event("planning_completed")
-                
-                return state
+                span.set_status("OK")
+                return steps
                 
             except Exception as e:
-                span.record_exception(e)
-                span.set_status(trace.Status(trace.StatusCode.ERROR, str(e)))
-                
-                state.planner_state.status = TaskStatus.FAILED
-                state.planner_state.last_action = f"Planning failed: {str(e)}"
-                state.add_error(f"Planner error: {str(e)}")
-                
-                return state
+                span.set_status("ERROR", str(e))
+                self.logger.error(f"Planning failed: {str(e)}")
+                raise
+    
+    def _build_prompt(self, user_request: str, context: Optional[Dict[str, Any]] = None) -> str:
+        """Build prompt for LLM"""
+        context_str = ""
+        if context:
+            context_str = f"\nContext: {json.dumps(context, indent=2)}"
+        
+        return f"""
+{self.system_prompt}
+
+User Request: {user_request}{context_str}
+
+Please respond with a JSON object containing the execution plan.
+"""
     
     def _parse_llm_response(self, response: str) -> Dict:
         """Parse and validate LLM response"""

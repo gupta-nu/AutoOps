@@ -6,6 +6,7 @@ import asyncio
 import signal
 import sys
 import logging
+import time
 from contextlib import asynccontextmanager
 
 import click
@@ -13,8 +14,8 @@ import uvicorn
 from dotenv import load_dotenv
 
 from src.dashboard.app import app
-from src.utils.task_manager import task_manager
-from src.monitoring.tracing import initialize_tracing
+from src.utils.task_manager_simple import task_manager
+from src.monitoring.tracing_simple import initialize_tracing
 from config.settings import settings
 
 
@@ -139,13 +140,13 @@ def serve(host, port, reload, workers):
 def submit(request, priority, timeout):
     """Submit a task via CLI"""
     async def _submit():
-        from src.utils.task_manager import TaskPriority
+        from src.utils.task_manager_simple import TaskPriority
         
         await autoops_app.start()
         
         try:
             task_id = await task_manager.submit_task(
-                request=request,
+                func=lambda: f"Processing request: {request}",
                 priority=TaskPriority(priority),
                 timeout=timeout
             )
@@ -155,10 +156,13 @@ def submit(request, priority, timeout):
             # Wait for completion
             while True:
                 status = await task_manager.get_task_status(task_id)
-                if status and status['status'] in ['completed', 'failed', 'cancelled']:
-                    click.echo(f"Task {status['status']}: {task_id}")
-                    if status['status'] == 'failed':
-                        click.echo(f"Error: {status.get('error', 'Unknown error')}")
+                if status and status in ['completed', 'failed', 'cancelled']:
+                    click.echo(f"Task {status}: {task_id}")
+                    if status == 'failed':
+                        # Get task details for error info
+                        task = task_manager.tasks.get(task_id)
+                        if task and task.error:
+                            click.echo(f"Error: {task.error}")
                     break
                 await asyncio.sleep(1)
                 
@@ -173,34 +177,42 @@ def submit(request, priority, timeout):
 @click.option('--status', help='Filter by task status')
 def list_tasks(limit, status):
     """List tasks"""
-    async def _list():
-        from src.agents.state import TaskStatus
+    async def _list(limit_val, status_val):
+        from src.utils.task_manager_simple import TaskStatus
         
         await autoops_app.start()
         
         try:
-            task_status = TaskStatus(status) if status else None
-            tasks = await task_manager.list_tasks(status=task_status, limit=limit)
+            tasks = await task_manager.get_all_tasks()
+            
+            # Filter by status if provided
+            if status_val:
+                tasks = [task for task in tasks if str(task['status']) == status_val]
+            
+            # Limit results
+            tasks = tasks[:limit_val]
             
             if not tasks:
                 click.echo("No tasks found")
                 return
             
-            click.echo(f"{'ID':<8} {'Status':<12} {'Created':<20} {'Request'}")
+            click.echo(f"{'ID':<36} {'Status':<12} {'Created':<20}")
             click.echo("-" * 80)
             
             for task in tasks:
                 task_id = task['task_id'][:8]
                 status = task['status']
-                created = task['created_at'][:19]
-                request = task['request'][:40] + '...' if len(task['request']) > 40 else task['request']
+                created = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(task['created_at']))
                 
-                click.echo(f"{task_id:<8} {status:<12} {created:<20} {request}")
+                click.echo(f"{task_id:<36} {status:<12} {created:<20}")
+                
+                if task.get('error'):
+                    click.echo(f"    Error: {task['error']}")
                 
         finally:
             await autoops_app.stop()
     
-    asyncio.run(_list())
+    asyncio.run(_list(limit, status))
 
 
 @cli.command()

@@ -13,7 +13,7 @@ from opentelemetry import trace
 from .state import AutoOpsState, TaskStatus
 from .planner import PlannerAgent
 from .executor import ExecutorAgent
-from ..monitoring.tracing import get_tracer, initialize_tracing
+from ..monitoring.tracing_simple import get_tracer, initialize_tracing
 from config.settings import settings
 
 tracer = get_tracer(__name__)
@@ -88,12 +88,11 @@ class AutoOpsOrchestrator:
         
         return workflow
     
-    @tracer.start_as_current_span("orchestrator_process_request")
     async def process_request(self, request: str, request_id: Optional[str] = None) -> AutoOpsState:
         """
         Process a natural language request through the multi-agent workflow
         """
-        with tracer.start_as_current_span("process_request") as span:
+        with tracer.start_as_current_span("orchestrator_process_request") as span:
             span.set_attribute("request", request)
             
             # Create initial state

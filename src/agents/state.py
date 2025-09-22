@@ -71,6 +71,19 @@ class KubernetesOperation(BaseModel):
     namespace: str = "default"
     manifest: Optional[Dict[str, Any]] = None
     parameters: Dict[str, Any] = Field(default_factory=dict)
+
+
+class ActionStep(BaseModel):
+    """Individual action step in an execution plan"""
+    step_id: str
+    action: str
+    resource_type: str
+    resource_name: Optional[str] = None
+    namespace: str = "default"
+    manifest: Optional[Dict[str, Any]] = None
+    parameters: Dict[str, Any] = Field(default_factory=dict)
+    dependencies: List[str] = Field(default_factory=list)
+    estimated_duration: Optional[int] = None  # seconds
     
 
 class ExecutionPlan(BaseModel):

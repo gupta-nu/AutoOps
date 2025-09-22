@@ -11,7 +11,7 @@ from kubernetes import client, config
 from kubernetes.client.rest import ApiException
 from opentelemetry import trace
 
-from ..monitoring.tracing import get_tracer
+from ..monitoring.tracing_simple import get_tracer
 from config.settings import settings
 
 tracer = get_tracer(__name__)
@@ -49,7 +49,6 @@ class KubernetesClient:
         self.autoscaling_v1 = client.AutoscalingV1Api()
         self.storage_v1 = client.StorageV1Api()
     
-    @tracer.start_as_current_span("k8s_create_resource")
     async def create_resource(
         self, 
         resource_type: str, 
@@ -57,7 +56,7 @@ class KubernetesClient:
         manifest: Dict[str, Any]
     ) -> Dict[str, Any]:
         """Create a Kubernetes resource"""
-        with tracer.start_as_current_span("create_operation") as span:
+        with tracer.start_as_current_span("k8s_create_resource") as span:
             span.set_attribute("resource_type", resource_type)
             span.set_attribute("namespace", namespace)
             

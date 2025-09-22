@@ -10,8 +10,8 @@ from uuid import uuid4
 from opentelemetry import trace
 from tenacity import retry, stop_after_attempt, wait_exponential
 
-from ..kubernetes.client import KubernetesClient
-from ..monitoring.tracing import get_tracer
+from ..kubernetes.client_simple import KubernetesClient
+from ..monitoring.tracing_simple import get_tracer
 from .state import (
     AutoOpsState,
     ExecutionResult,
@@ -33,12 +33,11 @@ class ExecutorAgent:
         self.k8s_client = KubernetesClient()
         self.max_concurrent_operations = settings.max_concurrent_tasks
     
-    @tracer.start_as_current_span("executor_agent_execute")
     async def execute(self, state: AutoOpsState) -> AutoOpsState:
         """
         Execute the operations in the execution plan
         """
-        with tracer.start_as_current_span("execution_process") as span:
+        with tracer.start_as_current_span("executor_agent_execute") as span:
             span.set_attribute("request_id", str(state.request_id))
             
             if not state.execution_plan:

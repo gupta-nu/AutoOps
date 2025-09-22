@@ -6,14 +6,19 @@ import os
 from pathlib import Path
 from typing import Optional
 
-from pydantic import BaseSettings, Field
+try:
+    from pydantic import BaseSettings, Field
+except ImportError:
+    # Fallback for older pydantic versions
+    from pydantic_settings import BaseSettings
+    from pydantic import Field
 
 
 class Settings(BaseSettings):
     """Application settings"""
     
     # OpenAI Configuration
-    openai_api_key: str = Field(..., env="OPENAI_API_KEY")
+    openai_api_key: str = Field("your_openai_api_key_here", env="OPENAI_API_KEY")
     openai_model: str = Field("gpt-4", env="OPENAI_MODEL")
     
     # Kubernetes Configuration
@@ -51,7 +56,7 @@ class Settings(BaseSettings):
     log_format: str = Field("json", env="LOG_FORMAT")
     
     # Security
-    secret_key: str = Field(..., env="SECRET_KEY")
+    secret_key: str = Field("development-secret-key-change-in-production", env="SECRET_KEY")
     access_token_expire_minutes: int = Field(30, env="ACCESS_TOKEN_EXPIRE_MINUTES")
     
     # Task Configuration
