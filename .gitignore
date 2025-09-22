@@ -128,6 +128,9 @@ logs/
 data/
 .autoops/
 config/.env
+server.log
+test_*.sh
+*.tmp
 
 # Kubernetes
 kubeconfig
